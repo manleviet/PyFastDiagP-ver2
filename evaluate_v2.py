@@ -7,8 +7,8 @@ import time
 
 cards = ["16"]  # , "16"]  # "1", "2", "4",
 # lmaxs = ["0"]  # , "1", "2", "3", "4", "5"]
-cores = ["2", "4", "8"]
-numScenarios = 10
+cores = ["16"]  # "2", "4", "8",
+numScenarios = 2
 
 solver_path = "solver_apps/org.sat4j.core.jar"
 

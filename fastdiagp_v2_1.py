@@ -27,7 +27,7 @@ def findDiagnosis(C: list, B: list) -> list:
     :param B: a background knowledge
     :return: a diagnosis or an empty set
     """
-    global pool
+    global pool, total_time
 
     logging.info("fastDiag [C={}, B={}]".format(C, B))
 
@@ -38,8 +38,10 @@ def findDiagnosis(C: list, B: list) -> list:
     else:  # return C \ FD(C, B, Φ)
         pool = mp.Pool(numCores)
 
+        start_time = time.time()
         mss = fd([], C, B)
         diag = utils.diff(C, mss)
+        total_time = time.time() - start_time
 
         pool.close()
         pool.terminate()
@@ -108,7 +110,7 @@ def is_consistent_with_lookahead(C, B, Δ) -> (bool, float):
 
     genhash = hashcode = utils.get_hashcode(B + C)
     if not (hashcode in lookupTable):
-        currentNumGenCC = 0 # reset the number of generated consistency checks
+        currentNumGenCC = 0  # reset the number of generated consistency checks
         lookahead(C, B, [Δ], 0)
         # print("lookahead finished with {} generated CC".format(currentNumGenCC))
 
@@ -211,6 +213,7 @@ if __name__ == '__main__':
     numCores = mp.cpu_count()
     maxNumGenCC = numCores  # - 1
     currentNumGenCC = 0
+    total_time = 0
 
     solver_path = "solver_apps/choco4solver.jar"
 
@@ -229,9 +232,7 @@ if __name__ == '__main__':
 
     B, C = utils.prepare_cstrs_sets(in_model_filename, in_req_filename)
 
-    start_time = time.time()
     diag = findDiagnosis(C, B)
-    total_time = time.time() - start_time
 
     print(in_req_filename + "|" + str(total_time) + "|" + str(checker.counter_CC)
           + "|" + str(counter_readyCC) + "|" + str(len(lookupTable))
