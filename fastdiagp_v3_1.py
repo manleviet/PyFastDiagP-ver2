@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Breadth first search approach
+Deep first search approach - but right to left
 The assumption of consistency of B U C is taken into account first
 
 Run the consistency check on the main thread, if it doesn't exist in the lookup table.
@@ -122,8 +122,8 @@ def is_consistent_with_lookahead(C, B, Δ) -> (bool, float):
         # lookupTable.update({hashcode: True})
 
         currentNumGenCC = 1  # reset the number of generated consistency checks
-        # pool.apply_async(lookahead, args=([C, B, [Δ], 0]))
-        lookahead(C, B, [Δ], 0)
+        pool.apply_async(lookahead, args=([C, B, [Δ], 0]))
+        # lookahead(C, B, [Δ], 0)
         # print("lookahead finished with {} generated CC".format(currentNumGenCC))
 
         result = checker.is_consistent(BwithC, solver_path)
