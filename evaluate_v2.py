@@ -7,7 +7,7 @@ import time
 
 cards = ["16"]  # , "16"]  # "1", "2", "4",
 # lmaxs = ["0"]  # , "1", "2", "3", "4", "5"]
-cores = ["16"]  # "2", "4", "8",
+cores = ["2", "4", "8", "16"]  #
 numScenarios = 2
 
 solver_path = "solver_apps/org.sat4j.core.jar"
@@ -29,15 +29,20 @@ for card in cards:
             # os.system(
             #     "python3 ./fastdiagp_v1_1.py " + modelPath + " " + reqPath + " " + solver_path + " " + core + " >>" + " resultFastDiagPV1_1.csv")
 
-            print(
-                "python3 ./fastdiagp_v2_1.py " + modelPath + " " + reqPath + " " + solver_path + " " + core)
-            os.system(
-                "python3 ./fastdiagp_v2_1.py " + modelPath + " " + reqPath + " " + solver_path + " " + core + " >>" + " resultFastDiagPV2_1.csv")
+            # print(
+            #     "python3 ./fastdiagp_v2_1.py " + modelPath + " " + reqPath + " " + solver_path + " " + core)
+            # os.system(
+            #     "python3 ./fastdiagp_v2_1.py " + modelPath + " " + reqPath + " " + solver_path + " " + core + " >>" + " resultFastDiagPV2_1.csv")
 
             # print(
-            #     "python3 ./fastdiagp_v4_1.py " + modelPath + " " + reqPath + " " + solver_path + " " + core)
+            #     "python3 ./fastdiagp_v3_1.py " + modelPath + " " + reqPath + " " + solver_path + " " + core)
             # os.system(
-            #     "python3 ./fastdiagp_v4_1.py " + modelPath + " " + reqPath + " " + solver_path + " " + core + " >>" + " resultFastDiagPV4_1.csv")
+            #     "python3 ./fastdiagp_v3_1.py " + modelPath + " " + reqPath + " " + solver_path + " " + core + " >>" + " resultFastDiagPV3_1.csv")
+
+            print(
+                "python3 ./fastdiagp_v4_1.py " + modelPath + " " + reqPath + " " + solver_path + " " + core)
+            os.system(
+                "python3 ./fastdiagp_v4_1.py " + modelPath + " " + reqPath + " " + solver_path + " " + core + " >>" + " resultFastDiagPV4_1.csv")
 
 total_time = time.time() - start_time
 print("Sat4j time: " + str(total_time))
