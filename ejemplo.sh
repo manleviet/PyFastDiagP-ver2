@@ -14,5 +14,5 @@
 #-----------------Toolchain---------------------------
 # ----------------Modulos----------------------------
 # ----------------Comando--------------------------
-pip3 install -r requirements.txt
+pip install python-sat --no-binary :all: --user
 python evaluate_v2.py

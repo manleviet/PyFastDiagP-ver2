@@ -5,9 +5,9 @@ import time
 
 # logging.config.fileConfig('logging.conf')
 
-cards = ["16"]  # , "16"]  # "1", "2", "4",
+cards = ["16"]  # "1", "2", "4", "8",
 # lmaxs = ["0"]  # , "1", "2", "3", "4", "5"]
-cores = ["2", "4", "8", "16"]  #
+cores = ["32"]  # , "4", "6", "8"
 numScenarios = 2
 
 solver_path = "solver_apps/org.sat4j.core.jar"
