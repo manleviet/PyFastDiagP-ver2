@@ -14,5 +14,4 @@
 #-----------------Toolchain---------------------------
 # ----------------Modulos----------------------------
 # ----------------Comando--------------------------
-pip install python-sat --no-binary :all: --user
-python evaluate_v2.py
+python3 evaluate_v2.py
