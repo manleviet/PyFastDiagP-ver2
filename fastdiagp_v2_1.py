@@ -106,13 +106,17 @@ def fd(Δ: list, C: list, B: list) -> list:
 
 
 def is_consistent_with_lookahead(C, B, Δ) -> (bool, float):
-    global pool, genhash, currentNumGenCC, lookupTable
+    global pool, genhash, currentNumGenCC, lookupTable, total_lookahead_time
 
     genhash = hashcode = utils.get_hashcode(B + C)
     if not (hashcode in lookupTable):
         currentNumGenCC = 0  # reset the number of generated consistency checks
+
+        start_time = time.time()
         lookahead(C, B, [Δ], 0)
         # print("lookahead finished with {} generated CC".format(currentNumGenCC))
+        end_time = time.time()
+        total_lookahead_time = total_lookahead_time + (end_time - start_time)
 
     return lookup_CC(hashcode)
 
@@ -214,6 +218,7 @@ if __name__ == '__main__':
     maxNumGenCC = numCores  # - 1
     currentNumGenCC = 0
     total_time = 0
+    total_lookahead_time = 0
 
     solver_path = "solver_apps/choco4solver.jar"
 
@@ -234,6 +239,6 @@ if __name__ == '__main__':
 
     diag = findDiagnosis(C, B)
 
-    print(in_req_filename + "|" + str(total_time) + "|" + str(checker.counter_CC)
+    print(in_req_filename + "|" + str(total_time) + "|" + str(total_lookahead_time) + "|" + str(checker.counter_CC)
           + "|" + str(counter_readyCC) + "|" + str(len(lookupTable))
           + "|" + str(numCores) + "|FastDiagP_V2_1|" + solver_path + "|" + str(diag))
