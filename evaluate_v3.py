@@ -1,4 +1,7 @@
 #!/bin/python3
+"""
+maxNumGenCC = min(numCores - 1, 4)
+"""
 # import logging.config
 import os
 import time
@@ -30,9 +33,9 @@ for card in cards:
             #     "python3 ./fastdiagp_v1_1.py " + modelPath + " " + reqPath + " " + solver_path + " " + core + " >>" + " resultFastDiagPV1_1.csv")
 
             print(
-                "python3 ./fastdiagp_v2_1.py " + modelPath + " " + reqPath + " " + solver_path + " " + core)
+                "python3 ./fastdiagp_v2_2.py " + modelPath + " " + reqPath + " " + solver_path + " " + core)
             os.system(
-                "python3 ./fastdiagp_v2_1.py " + modelPath + " " + reqPath + " " + solver_path + " " + core + " >>" + " resultFastDiagPV2_1.csv")
+                "python3 ./fastdiagp_v2_2.py " + modelPath + " " + reqPath + " " + solver_path + " " + core + " >>" + " resultFastDiagPV2_2.csv")
 
             # print(
             #     "python3 ./fastdiagp_v3_1.py " + modelPath + " " + reqPath + " " + solver_path + " " + core)
@@ -40,9 +43,9 @@ for card in cards:
             #     "python3 ./fastdiagp_v3_1.py " + modelPath + " " + reqPath + " " + solver_path + " " + core + " >>" + " resultFastDiagPV3_1_1.csv")
 
             print(
-                "python3 ./fastdiagp_v4_1.py " + modelPath + " " + reqPath + " " + solver_path + " " + core)
+                "python3 ./fastdiagp_v4_2.py " + modelPath + " " + reqPath + " " + solver_path + " " + core)
             os.system(
-                "python3 ./fastdiagp_v4_1.py " + modelPath + " " + reqPath + " " + solver_path + " " + core + " >>" + " resultFastDiagPV4_1.csv")
+                "python3 ./fastdiagp_v4_2.py " + modelPath + " " + reqPath + " " + solver_path + " " + core + " >>" + " resultFastDiagPV4_2.csv")
 
 total_time = time.time() - start_time
 print("Sat4j time: " + str(total_time))

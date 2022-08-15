@@ -4,8 +4,8 @@ Deep first search approach - but right to left
 The assumption of consistency of B U C is taken into account first
 
 Limit the number of generated consistency checks to a fixed number of cores.
+maxNumGenCC = min(numCores - 1, 4)
 """
-
 import multiprocessing as mp
 import sys
 import time
@@ -218,7 +218,7 @@ if __name__ == '__main__':
         in_model_filename = "./data/tests/test_model.cnf"
         in_req_filename = "./data/tests/test_prod_1.cnf"
         solver_path = "solver_apps/org.sat4j.core.jar"
-    maxNumGenCC = numCores - 1
+    maxNumGenCC = min(numCores - 1, 4)
 
     B, C = utils.prepare_cstrs_sets(in_model_filename, in_req_filename)
 
@@ -226,4 +226,4 @@ if __name__ == '__main__':
 
     print(in_req_filename + "|" + str(total_time) + "|" + str(total_lookahead_time) + "|" + str(checker.counter_CC)
           + "|" + str(counter_readyCC) + "|" + str(len(lookupTable))
-          + "|" + str(numCores) + "|" + str(maxNumGenCC) + "|FastDiagP_V2_1|" + solver_path + "|" + str(diag))
+          + "|" + str(numCores) + "|" + str(maxNumGenCC) + "|FastDiagP_V2_2|" + solver_path + "|" + str(diag))

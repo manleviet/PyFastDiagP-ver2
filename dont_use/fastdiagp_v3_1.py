@@ -3,13 +3,14 @@
 Deep first search approach - but right to left
 The assumption of consistency of B U C is taken into account first
 
+Run the consistency check on the main thread, if it doesn't exist in the lookup table.
+
 Limit the number of generated consistency checks to a fixed number of cores.
 """
-
+import logging
 import multiprocessing as mp
 import sys
 import time
-import logging
 
 import checker
 import utils
@@ -29,14 +30,14 @@ def findDiagnosis(C: list, B: list) -> list:
     """
     global pool, total_time
 
-    # logging.info("fastDiag [C={}, B={}]".format(C, B))
+    logging.info("fastDiag [C={}, B={}]".format(C, B))
 
     # if isEmpty(C) or consistent(B U C) return Φ
     if len(C) == 0 or checker.is_consistent(B + C, solver_path)[0]:
-        # logging.info("return Φ")
+        logging.info("return Φ")
         return []
     else:  # return C \ FD(C, B, Φ)
-        pool = mp.Pool(numCores - 1)
+        pool = mp.Pool(numCores)
 
         start_time = time.time()
         mss = fd([], C, B)
@@ -46,7 +47,7 @@ def findDiagnosis(C: list, B: list) -> list:
         pool.close()
         pool.terminate()
 
-        # logging.info("return {}".format(diag))
+        logging.info("return {}".format(diag))
         return diag
 
 
@@ -68,16 +69,26 @@ def fd(Δ: list, C: list, B: list) -> list:
     :param B: a background knowledge
     :return: a maximal satisfiable subset MSS of C U B
     """
-    # logging.debug(">>> FD [Δ={}, C={}, B={}]".format(Δ, C, B))
+    logging.debug(">>> FD [Δ={}, C={}, B={}]".format(Δ, C, B))
 
     # if Δ != Φ and consistent(B U C) return C;
     if len(Δ) != 0 and is_consistent_with_lookahead(C, B, Δ)[0]:
-        # logging.debug("<<< return {}".format(C))
+        logging.debug("<<< return {}".format(C))
         return C
+    # if len(Δ) != 0:
+    #     BwithC = B + C
+    #     if len(BwithC) > 4:
+    #         if checker.is_consistent(BwithC, solver_path)[0]:
+    #             logging.debug("return C")
+    #             return C
+    #     else:
+    #         if is_consistent_with_lookahead(C, B, Δ)[0]:
+    #             logging.debug("<<< return {}".format(C))
+    #             return C
 
     # if singleton(C) return Φ;
     if len(C) == 1:
-        # logging.debug("<<< return Φ")
+        logging.debug("<<< return Φ")
         return []
 
     # C1 = {c1..ck}; C2 = {ck+1..cn};
@@ -89,26 +100,39 @@ def fd(Δ: list, C: list, B: list) -> list:
     C1withoutΔ1 = utils.diff(C1, Δ1)
     Δ2 = fd(C1withoutΔ1, C2, B + Δ1)
 
-    # logging.debug("<<< return [Δ1={} ∪ Δ2={}]".format(Δ1, Δ2))
+    logging.debug("<<< return [Δ1={} ∪ Δ2={}]".format(Δ1, Δ2))
 
     # return Δ1 + Δ2
     return Δ1 + Δ2
 
 
 def is_consistent_with_lookahead(C, B, Δ) -> (bool, float):
-    global pool, genhash, currentNumGenCC, lookupTable, total_lookahead_time
+    """
+    If the consistency check doesn't exist in the lookup table,
+    we run lookahead on a thread. Besides, we run the consistency check
+    on the main thread.
+    """
+    global pool, genhash, currentNumGenCC, lookupTable
 
-    genhash = hashcode = utils.get_hashcode(B + C)
+    BwithC = B + C
+
+    genhash = hashcode = utils.get_hashcode(BwithC)
     if not (hashcode in lookupTable):
-        currentNumGenCC = 0  # reset the number of generated consistency checks
 
-        start_time = time.time()
-        lookahead(C, B, [Δ], 0)
+        # lookupTable.update({hashcode: True})
+
+        currentNumGenCC = 1  # reset the number of generated consistency checks
+        pool.apply_async(lookahead, args=([C, B, [Δ], 0]))
+        # lookahead(C, B, [Δ], 0)
         # print("lookahead finished with {} generated CC".format(currentNumGenCC))
-        end_time = time.time()
-        total_lookahead_time = total_lookahead_time + (end_time - start_time)
 
-    return lookup_CC(hashcode)
+        result = checker.is_consistent(BwithC, solver_path)
+
+        # lookupTable.update({hashcode: result})
+
+        return result
+    else:
+        return lookup_CC(hashcode)
 
 
 def lookup_CC(hashcode: str) -> (bool, float):
@@ -116,7 +140,7 @@ def lookup_CC(hashcode: str) -> (bool, float):
 
     result = lookupTable.get(hashcode)
 
-    if result.ready():
+    if result.ready():  # result is not None and
         counter_readyCC = counter_readyCC + 1
     return result.get()
 
@@ -124,7 +148,7 @@ def lookup_CC(hashcode: str) -> (bool, float):
 def lookahead(C, B, Δ, level):
     global lookupTable, pool, genhash, currentNumGenCC
 
-    # logging.debug(">>> lookahead [l={}, Δ={}, C={}, B={}]".format(level, Δ, C, B))
+    logging.debug(">>> lookahead [l={}, Δ={}, C={}, B={}]".format(level, Δ, C, B))
 
     if currentNumGenCC < maxNumGenCC:
         BwithC = B + C
@@ -135,15 +159,16 @@ def lookahead(C, B, Δ, level):
             hashcode = genhash
             genhash = ""
 
-        if not (hashcode in lookupTable):
-            currentNumGenCC = currentNumGenCC + 1
-            future = pool.apply_async(checker.is_consistent, args=([BwithC, solver_path]))
-            lookupTable.update({hashcode: future})
+        if level > 0:  # don't re-generate the first consistency check
+            if not (hashcode in lookupTable):
+                currentNumGenCC = currentNumGenCC + 1
+                future = pool.apply_async(checker.is_consistent, args=([BwithC, solver_path]))
+                lookupTable.update({hashcode: future})
 
-            # logging.debug(">>> addCC [l={}, C={}]".format(level, hashcode))
+                logging.debug(">>> addCC [l={}, C={}]".format(level, hashcode))
 
         # B U C assumed consistent
-        if len(Δ) > 1 and len(Δ[0]) == 1:
+        if len(Δ) > 1:  # and len(Δ[0]) == 1:
             hashcode = utils.get_hashcode(BwithC + Δ[0])
             if hashcode in lookupTable:  # case 2.1
                 Δ2l, Δ2r = utils.split(Δ[1])
@@ -198,13 +223,14 @@ def lookahead(C, B, Δ, level):
 if __name__ == '__main__':
     lookupTable = {}
     counter_readyCC = 0
+    lmax = 4
     pool = None
-    numCores = 0
+    numCores = mp.cpu_count()
+    maxNumGenCC = numCores  # - 1
     currentNumGenCC = 0
     total_time = 0
-    total_lookahead_time = 0
 
-    solver_path = "solver_apps/choco4solver.jar"
+    solver_path = "../solver_apps/choco4solver.jar"
 
     genhash = ""
 
@@ -215,15 +241,14 @@ if __name__ == '__main__':
         numCores = int(sys.argv[4])
     else:
         numCores = mp.cpu_count()
-        in_model_filename = "./data/tests/test_model.cnf"
-        in_req_filename = "./data/tests/test_prod_1.cnf"
-        solver_path = "solver_apps/org.sat4j.core.jar"
-    maxNumGenCC = numCores - 1
+        in_model_filename = "../data/tests/test_model.cnf"
+        in_req_filename = "../data/tests/test_prod_1.cnf"
+        solver_path = "../solver_apps/org.sat4j.core.jar"
 
     B, C = utils.prepare_cstrs_sets(in_model_filename, in_req_filename)
 
     diag = findDiagnosis(C, B)
 
-    print(in_req_filename + "|" + str(total_time) + "|" + str(total_lookahead_time) + "|" + str(checker.counter_CC)
+    print(in_req_filename + "|" + str(total_time) + "|" + str(checker.counter_CC)
           + "|" + str(counter_readyCC) + "|" + str(len(lookupTable))
-          + "|" + str(numCores) + "|" + str(maxNumGenCC) + "|FastDiagP_V2_1|" + solver_path + "|" + str(diag))
+          + "|" + str(numCores) + "|FastDiagP_V3_1|" + solver_path + "|" + str(diag))

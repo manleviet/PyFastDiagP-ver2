@@ -29,14 +29,14 @@ def findDiagnosis(C: list, B: list) -> list:
     """
     global pool, total_time
 
-    logging.info("fastDiag [C={}, B={}]".format(C, B))
+    # logging.info("fastDiag [C={}, B={}]".format(C, B))
 
     # if isEmpty(C) or consistent(B U C) return Φ
     if len(C) == 0 or checker.is_consistent(B + C, solver_path)[0]:
-        logging.info("return Φ")
+        # logging.info("return Φ")
         return []
     else:  # return C \ FD(C, B, Φ)
-        pool = mp.Pool(numCores)
+        pool = mp.Pool(numCores - 1)
 
         start_time = time.time()
         mss = fd([], C, B)
@@ -46,7 +46,7 @@ def findDiagnosis(C: list, B: list) -> list:
         pool.close()
         pool.terminate()
 
-        logging.info("return {}".format(diag))
+        # logging.info("return {}".format(diag))
         return diag
 
 
@@ -68,26 +68,16 @@ def fd(Δ: list, C: list, B: list) -> list:
     :param B: a background knowledge
     :return: a maximal satisfiable subset MSS of C U B
     """
-    logging.debug(">>> FD [Δ={}, C={}, B={}]".format(Δ, C, B))
+    # logging.debug(">>> FD [Δ={}, C={}, B={}]".format(Δ, C, B))
 
     # if Δ != Φ and consistent(B U C) return C;
     if len(Δ) != 0 and is_consistent_with_lookahead(C, B, Δ)[0]:
-        logging.debug("<<< return {}".format(C))
+        # logging.debug("<<< return {}".format(C))
         return C
-    # if len(Δ) != 0:
-    #     BwithC = B + C
-    #     if len(BwithC) > 4:
-    #         if checker.is_consistent(BwithC, solver_path)[0]:
-    #             logging.debug("return C")
-    #             return C
-    #     else:
-    #         if is_consistent_with_lookahead(C, B, Δ)[0]:
-    #             logging.debug("<<< return {}".format(C))
-    #             return C
 
     # if singleton(C) return Φ;
     if len(C) == 1:
-        logging.debug("<<< return Φ")
+        # logging.debug("<<< return Φ")
         return []
 
     # C1 = {c1..ck}; C2 = {ck+1..cn};
@@ -99,7 +89,7 @@ def fd(Δ: list, C: list, B: list) -> list:
     C1withoutΔ1 = utils.diff(C1, Δ1)
     Δ2 = fd(C1withoutΔ1, C2, B + Δ1)
 
-    logging.debug("<<< return [Δ1={} ∪ Δ2={}]".format(Δ1, Δ2))
+    # logging.debug("<<< return [Δ1={} ∪ Δ2={}]".format(Δ1, Δ2))
 
     # return Δ1 + Δ2
     return Δ1 + Δ2
@@ -142,7 +132,7 @@ def lookup_CC(hashcode: str) -> (bool, float):
 def lookahead(C, B, Δ, level):
     global lookupTable, pool, genhash, currentNumGenCC, lookaheads
 
-    logging.debug(">>> lookahead [l={}, Δ={}, C={}, B={}]".format(level, Δ, C, B))
+    # logging.debug(">>> lookahead [l={}, Δ={}, C={}, B={}]".format(level, Δ, C, B))
 
     if currentNumGenCC < maxNumGenCC:
         BwithC = B + C
@@ -158,7 +148,7 @@ def lookahead(C, B, Δ, level):
             future = pool.apply_async(checker.is_consistent, args=([BwithC, solver_path]))
             lookupTable.update({hashcode: future})
 
-            logging.info(">>> addCC [l={}, C={}]".format(level, hashcode))
+            # logging.info(">>> addCC [l={}, C={}]".format(level, hashcode))
 
         # B U C assumed consistent
         if len(Δ) > 1 and len(Δ[0]) == 1:
@@ -222,10 +212,8 @@ def lookahead(C, B, Δ, level):
 if __name__ == '__main__':
     lookupTable = {}
     counter_readyCC = 0
-    lmax = 4
     pool = None
-    numCores = mp.cpu_count()
-    maxNumGenCC = numCores  # - 1
+    numCores = 0
     currentNumGenCC = 0
     total_time = 0
     total_lookahead_time = 0
@@ -245,6 +233,7 @@ if __name__ == '__main__':
         in_model_filename = "./data/tests/test_model.cnf"
         in_req_filename = "./data/tests/test_prod_1.cnf"
         solver_path = "solver_apps/org.sat4j.core.jar"
+    maxNumGenCC = numCores - 1
 
     B, C = utils.prepare_cstrs_sets(in_model_filename, in_req_filename)
 
@@ -252,4 +241,4 @@ if __name__ == '__main__':
 
     print(in_req_filename + "|" + str(total_time) + "|" + str(total_lookahead_time) + "|" + str(checker.counter_CC)
           + "|" + str(counter_readyCC) + "|" + str(len(lookupTable))
-          + "|" + str(numCores) + "|FastDiagP_V4_1|" + solver_path + "|" + str(diag))
+          + "|" + str(numCores) + "|" + str(maxNumGenCC) + "|FastDiagP_V4_1|" + solver_path + "|" + str(diag))
